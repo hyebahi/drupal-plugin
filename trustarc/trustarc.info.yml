@@ -1,6 +1,11 @@
 name: TrustArc Cookie Consent Manager
 description: A plugin to configure and inject TrustArc CMP script along with banner and Cookie Preferences link.
 type: module
-package: Custom
+package: Other
 configure: trustarc.admin.header
-core_version_requirement: ^8.8 || ^9 || ^10
+core_version_requirement: ^10.2 || ^11
+
+# Information added by Drupal.org packaging script on 2025-02-11
+version: '1.1'
+project: 'trustarc'
+datestamp: 1739236014

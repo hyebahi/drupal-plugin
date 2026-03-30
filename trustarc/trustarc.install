@@ -8,8 +8,22 @@
 /**
  * Implements hook_uninstall().
  */
-function trustarc_uninstall() {
+function trustarc_uninstall(): void {
   \Drupal::service('config.factory')
-    ->getEditable('trustarc.header.settings')
+    ->getEditable('trustarc.settings')
     ->delete();
+}
+
+/**
+ * Initializes Consent Behavior config for existing installs.
+ */
+function trustarc_update_8001(): string {
+  $config = \Drupal::configFactory()->getEditable('trustarc.settings');
+  $cmp_consent_config = $config->get('cmp_consent_config');
+
+  if ($cmp_consent_config === NULL || $cmp_consent_config === '') {
+    $config->set('cmp_consent_config', 'notice_behavior')->save();
+  }
+
+  return 'Initialized TrustArc consent behavior default setting.';
 }

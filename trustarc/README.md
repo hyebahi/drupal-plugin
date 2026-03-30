@@ -1,5 +1,7 @@
 # TrustArc Cookie Consent Manager
 
+Current module version: 1.2
+
 This Drupal module integrates the TrustArc Cookie Consent Manager (CCM) to help you comply with privacy regulations like GDPR, CCPA, and LGPD. It allows you to configure and inject the TrustArc CMP script, display a banner, provide a Cookie Preferences link, and integrate with Google Consent Mode (v2). This plugin offers a user-friendly interface for adding the cookie consent manager script to the site without requiring any theme modifications.
 
 ## Features
@@ -38,6 +40,8 @@ The TrustArc Cookie Consent Manager module requires a TrustArc account. You can 
   * **Banner Container:** Specify the ID for your TrustArc banner (e.g., `consent_blackbar`).
   * **Display Cookie Preferences Link:** Enable this option to display a Cookie Preferences link on your site.
   * **Cookie Preferences Selector:** (Optional) If you want to inject the link into a specific element, provide a CSS query selector (e.g., `#footer`). If left blank, the link will be appended to the `<body>`.
+  * **Consent Behavior:** Choose between `Notice Behavior (Cookie)` and `Consent Model (JavaScript)`.
+  * **Opt-out Setting:** Define region behavior (for example, `us, eu`). When `Consent Model` is selected and this field is blank, the module defaults to `opt-out`.
   * **Enable Google Consent Mode:** Enable to integrate with Google Consent Mode v2.
   * **Google Consent Mode Settings:**
 
@@ -64,10 +68,10 @@ You can enable these options in the module settings under the "Google Consent Mo
 For more detailed documentation, please refer to the TrustArc support site or contact TrustArc support.
 
 
-### What happens when I enable TrustArc Events? =
+### What happens when I enable TrustArc Events?
 When enabled, the plugin will send events using the dataLayer object.
 
-### Does this plugin help with GDPR or CCPA compliance? =  
+### Does this plugin help with GDPR or CCPA compliance?
 
 This plugin integrates TrustArc’s Consent Management Platform (CMP) to facilitate compliance with regulations such as **GDPR, CCPA, LGPD, and others**. However, compliance depends on how the site owner configures consent settings, discloses data collection, and manages consent records.  
 
@@ -77,7 +81,7 @@ To ensure compliance, verify that:
 - You regularly review your consent settings to align with privacy laws.
 - You implement necessary mechanisms, such as Tag Manager or other consent-aware tools, to ensure that tracking scripts and third-party services respect users' preferences.
 
-### Links to TrustArc's terms and policies:**
+### Links to TrustArc's terms and policies
 
 * Privacy Policy: [https://trustarc.com/privacy-policy/](https://trustarc.com/privacy-policy/)
 * **Terms of Service:** [https://trustarc.com/subscription-services-agreement/](https://trustarc.com/subscription-services-agreement/)
@@ -90,3 +94,4 @@ Current maintainers:
 
 * Haissam Yebahi - [hyebahi](https://www.drupal.org/u/hyebahi)
 * Felipe Brito - [felipenbrito](https://www.drupal.org/u/felipenbrito)
+* TrustArc - [trustarc](https://www.drupal.org/u/trustarc)

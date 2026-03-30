@@ -1,0 +1,11 @@
+{
+  "extends": ["drupal"],
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "globals": {
+    "Drupal": true,
+    "drupalSettings": true
+  }
+}

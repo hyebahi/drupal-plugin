@@ -1,0 +1,30 @@
+cmp_version: 'advanced'
+cmp_script: ''
+cmp_script_params: ''
+cmp_preferences_selector: ''
+cmp_preferences: false
+cmp_banner: 'consent_blackbar'
+cmp_standard_event_listener: false
+cmp_consent_config: 'notice_behavior'
+cmp_google_consent_mode: false
+cmp_ga_measurement_id: ''
+cmp_ads_data_redaction: false
+cmp_url_passthrough: false
+cmp_ga_implied_location: ''
+cmp_consent_type_mapping:
+  ad_storage:
+    trustarc_category_id: ''
+  ad_user_data:
+    trustarc_category_id: ''
+  ad_personalization:
+    trustarc_category_id: ''
+  personalization_storage:
+    trustarc_category_id: ''
+  analytics_storage:
+    trustarc_category_id: ''
+  functionality_storage:
+    trustarc_category_id: ''
+  security_storage:
+    trustarc_category_id: ''
+  wait_for_update:
+    trustarc_category_id: '500'
