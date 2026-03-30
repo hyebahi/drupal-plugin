@@ -1,14 +1,14 @@
 <?php
 
+/**
+ * @file
+ * Provides TrustArc CMP integration for Drupal.
+ */
+
 use Drupal\Component\Utility\UrlHelper;
-
-
 
 /**
  * Implements hook_page_attachments_alter().
- *
- * @param array<string, mixed> $page
- *   The page attachments array.
  */
 function trustarc_page_attachments_alter(array &$page): void {
   if (
@@ -48,7 +48,7 @@ function trustarc_page_attachments_alter(array &$page): void {
     }
   }
 
-  // Inject TrustArc script
+  // Inject TrustArc script.
   $trustarc_script = [
     '#type' => 'html_tag',
     '#tag' => 'script',
@@ -60,22 +60,17 @@ function trustarc_page_attachments_alter(array &$page): void {
     ],
   ];
 
-
-  // Ensure 'html_head' array exists
+  // Ensure 'html_head' array exists.
   if (!isset($page['#attached']['html_head'])) {
     $page['#attached']['html_head'] = [];
   }
 
   array_unshift($page['#attached']['html_head'], [$trustarc_script, 'trustarc_script']);
 
-
 }
 
 /**
  * Implements hook_preprocess_html().
- *
- * @param array<string, mixed> $variables
- *   Variables for the HTML template.
  */
 function trustarc_preprocess_html(array &$variables): void {
   if (
@@ -103,8 +98,7 @@ function trustarc_preprocess_html(array &$variables): void {
   $cmp_ga_implied_location = trim((string) $config->get('cmp_ga_implied_location'));
   $banner_id = $cmp_banner;
 
-
-  // Ensure #attached array exists
+  // Ensure #attached array exists.
   if (!isset($variables['#attached'])) {
     $variables['#attached'] = [];
   }
@@ -115,25 +109,25 @@ function trustarc_preprocess_html(array &$variables): void {
     $variables['#attached']['drupalSettings'] = [];
   }
 
-  // Attach the library and settings
+  // Attach the library and settings.
   $variables['#attached']['library'][] = 'trustarc/trustarc_js';
 
   $variables['#attached']['drupalSettings']['trustarc'] = [
-      'Version' => $cmp_version,
-      'script' => $cmp_script,
-      'scriptParams' => $cmp_script_params,
-      'preferencesSelector' => $cmp_preferences_selector,
-      'preferences' => $cmp_preferences,
-      'banner' => $banner_id,
-      'standardEventListener' => $cmp_standard_event_listener,
-      'consentConfig' => $cmp_consent_config,
-      'gcmEnabled' => $cmp_google_consent_mode,
-      'gaMeasurementID' => $cmp_ga_measurement_id,
-      'adsDataRedaction' => $cmp_ads_data_redaction,
-      'URLPassthrough' => $cmp_url_passthrough,
-      'impliedLocation' => $cmp_ga_implied_location,
-      'consentTypeMapping' => $cmp_consent_type_mapping,
-    ];
+    'Version' => $cmp_version,
+    'script' => $cmp_script,
+    'scriptParams' => $cmp_script_params,
+    'preferencesSelector' => $cmp_preferences_selector,
+    'preferences' => $cmp_preferences,
+    'banner' => $banner_id,
+    'standardEventListener' => $cmp_standard_event_listener,
+    'consentConfig' => $cmp_consent_config,
+    'gcmEnabled' => $cmp_google_consent_mode,
+    'gaMeasurementID' => $cmp_ga_measurement_id,
+    'adsDataRedaction' => $cmp_ads_data_redaction,
+    'URLPassthrough' => $cmp_url_passthrough,
+    'impliedLocation' => $cmp_ga_implied_location,
+    'consentTypeMapping' => $cmp_consent_type_mapping,
+  ];
 
   if (!empty($banner_id)) {
     $variables['page_top']['trustarc_banner_container'] = [
