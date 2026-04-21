@@ -165,7 +165,7 @@
    */
   const __dispatched__ = {}; // Map of previously dispatched preference levels.
   Drupal.trustarc.handleConsentDecisionForTA = function (consent) {
-    consent.consentDecision &&
+    if (consent.consentDecision) {
       consent.consentDecision.forEach(function (label) {
         if (!__dispatched__[label]) {
           if (window.dataLayer) {
@@ -176,14 +176,11 @@
           __dispatched__[label] = 1;
         }
       });
+    }
   };
 
   const interval = setInterval(() => {
-    if (
-      window.truste &&
-      window.truste.cma &&
-      window.truste.cma.callApi
-    ) {
+    if (window.truste && window.truste.cma && window.truste.cma.callApi) {
       const consentDecision = window.truste.cma.callApi(
         'getGDPRConsentDecision',
         domain,

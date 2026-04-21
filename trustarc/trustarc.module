@@ -9,6 +9,9 @@ use Drupal\Component\Utility\UrlHelper;
 
 /**
  * Implements hook_page_attachments_alter().
+ *
+ * @param array<string, mixed> $page
+ *   The page attachments array.
  */
 function trustarc_page_attachments_alter(array &$page): void {
   if (
@@ -71,6 +74,9 @@ function trustarc_page_attachments_alter(array &$page): void {
 
 /**
  * Implements hook_preprocess_html().
+ *
+ * @param array<string, mixed> $variables
+ *   The preprocess variables array.
  */
 function trustarc_preprocess_html(array &$variables): void {
   if (
