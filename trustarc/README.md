@@ -1,6 +1,6 @@
 # TrustArc Cookie Consent Manager
 
-Current module version: 1.2
+Current module version: 1.1
 
 This Drupal module integrates the TrustArc Cookie Consent Manager (CCM) to help you comply with privacy regulations like GDPR, CCPA, and LGPD. It allows you to configure and inject the TrustArc CMP script, display a banner, provide a Cookie Preferences link, and integrate with Google Consent Mode (v2). This plugin offers a user-friendly interface for adding the cookie consent manager script to the site without requiring any theme modifications.
 
