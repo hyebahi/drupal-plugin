@@ -8,6 +8,11 @@
   const TRUSTARC_ORIGIN = 'https://consent.trustarc.com';
   const trustarc = drupalSettings.trustarc;
 
+  /**
+   * Reads the TrustArc notice_behavior cookie value.
+   *
+   * @return {string} The cookie value, or an empty string if unavailable.
+   */
   function getBehaviorCookie() {
     if (
       !window.truste ||
@@ -19,6 +24,12 @@
     return window.truste.util.readCookie('notice_behavior') || '';
   }
 
+  /**
+   * Returns the current consent signal based on the configured consent mode.
+   *
+   * @param {string} consentConfig - Either 'consent_model' or 'notice_behavior'.
+   * @return {string} The active consent value, or an empty string if unavailable.
+   */
   function getConsentConfig(consentConfig) {
     if (consentConfig === 'consent_model') {
       if (
@@ -35,6 +46,12 @@
     return getBehaviorCookie();
   }
 
+  /**
+   * Checks whether the current consent setting matches an implied opt-out location.
+   *
+   * @param {string} consentSetting - The active consent value from getConsentConfig().
+   * @return {boolean} True if the location implies opt-out consent, false otherwise.
+   */
   function isImpliedLocation(consentSetting) {
     let impliedSettings = trustarc.impliedLocation
       ? trustarc.impliedLocation

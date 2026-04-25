@@ -17,7 +17,7 @@ function trustarc_uninstall(): void {
 /**
  * Initializes Consent Behavior config for existing installs.
  */
-function trustarc_update_8001(): string {
+function trustarc_update_10201(): string {
   $config = \Drupal::configFactory()->getEditable('trustarc.settings');
   $cmp_consent_config = $config->get('cmp_consent_config');
 
