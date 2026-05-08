@@ -1,0 +1,33 @@
+{
+    "name": "drupal/trustarc",
+    "description": "Provides TrustArc cookie consent banner integration",
+    "keywords": ["trustarc", "gdpr", "cookies", "ccpa"],
+    "type": "drupal-module",
+    "license": "GPL-2.0+",
+    "authors": [
+        {
+            "name": "Haissam Yebahi",
+            "role": "Maintainer"
+        },
+        {
+            "name": "Felipe Brito",
+            "role": "Contributor"
+        },
+        {
+            "name": "TrustArc",
+            "homepage": "https://www.drupal.org/u/trustarc",
+            "role": "Contributor"
+        }
+    ],
+    "require": {},
+    "require-dev": {
+        "drupal/coder": "^8.3",
+        "squizlabs/php_codesniffer": "^3.7",
+        "mglaman/drupal-check": "^1.4"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}

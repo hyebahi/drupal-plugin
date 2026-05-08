@@ -1,0 +1,103 @@
+trustarc.settings:
+  type: config_object
+  label: 'TrustArc settings'
+  mapping:
+    cmp_version:
+      type: string
+      label: 'CMP Version'
+    cmp_script:
+      type: string
+      label: 'CMP Script ID'
+    cmp_script_params:
+      type: string
+      label: 'CMP Script Params'
+    cmp_preferences_selector:
+      type: string
+      label: 'Cookie preferences selector'
+    cmp_preferences:
+      type: boolean
+      label: 'Display cookie preferences link'
+    cmp_banner:
+      type: string
+      label: 'Banner container ID'
+    cmp_standard_event_listener:
+      type: boolean
+      label: 'Fire custom events for GTM'
+    cmp_consent_config:
+      type: string
+      label: 'Consent behavior'
+    cmp_google_consent_mode:
+      type: boolean
+      label: 'Enable Google Consent Mode'
+    cmp_ga_measurement_id:
+      type: string
+      label: 'GA Measurement ID'
+    cmp_ads_data_redaction:
+      type: boolean
+      label: 'Enable Ads Data Redaction'
+    cmp_url_passthrough:
+      type: boolean
+      label: 'Enable URL Passthrough'
+    cmp_ga_implied_location:
+      type: string
+      label: 'Implied location'
+    cmp_consent_type_mapping:
+      type: mapping
+      label: 'Consent type mapping'
+      mapping:
+        ad_storage:
+          type: mapping
+          label: 'Ad Storage mapping'
+          mapping:
+            trustarc_category_id:
+              type: string
+              label: 'TrustArc category ID'
+        ad_user_data:
+          type: mapping
+          label: 'Ad User Data mapping'
+          mapping:
+            trustarc_category_id:
+              type: string
+              label: 'TrustArc category ID'
+        ad_personalization:
+          type: mapping
+          label: 'Ad Personalization mapping'
+          mapping:
+            trustarc_category_id:
+              type: string
+              label: 'TrustArc category ID'
+        personalization_storage:
+          type: mapping
+          label: 'Personalization Storage mapping'
+          mapping:
+            trustarc_category_id:
+              type: string
+              label: 'TrustArc category ID'
+        analytics_storage:
+          type: mapping
+          label: 'Analytics Storage mapping'
+          mapping:
+            trustarc_category_id:
+              type: string
+              label: 'TrustArc category ID'
+        functionality_storage:
+          type: mapping
+          label: 'Functionality Storage mapping'
+          mapping:
+            trustarc_category_id:
+              type: string
+              label: 'TrustArc category ID'
+        security_storage:
+          type: mapping
+          label: 'Security Storage mapping'
+          mapping:
+            trustarc_category_id:
+              type: string
+              label: 'TrustArc category ID'
+        wait_for_update:
+          type: mapping
+          label: 'Wait for Update mapping'
+          mapping:
+            trustarc_category_id:
+              type: string
+              label: 'TrustArc category ID'

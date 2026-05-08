@@ -28,6 +28,19 @@ services:
     volumes:
       - db_data:/var/lib/mysql
 
+  # Code Quality & Testing Service
+  code-quality:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: drupal-code-quality
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+    command: /bin/bash
+    stdin_open: true
+    tty: true
+
 volumes:
   drupal_data:
   db_data:

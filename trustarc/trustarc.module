@@ -1,50 +1,56 @@
 <?php
 
-use Drupal\Core\Cache\Cache;
-use Drupal\filter\FilterPluginCollection;
-use Drupal\Core\Template\Attribute;
+/**
+ * @file
+ * Provides TrustArc CMP integration for Drupal.
+ */
 
-
+use Drupal\Component\Utility\UrlHelper;
 
 /**
  * Implements hook_page_attachments_alter().
  */
-function trustarc_page_attachments_alter(array &$page) {
-  \Drupal::logger('trustarc')->notice('trustarc_page_attachments_alter() executed');
+function trustarc_page_attachments_alter(array &$page): void {
+  $page['#cache']['tags'][] = 'config:trustarc.settings';
+
+  if (
+    \Drupal::service('router.admin_context')->isAdminRoute(
+      \Drupal::routeMatch()->getRouteObject()
+    )
+  ) {
+    return;
+  }
 
   $config = \Drupal::config('trustarc.settings');
-  $cmp_version = $config->get('cmp_version', 'advanced');
-  $cmp_script = $config->get('cmp_script');
-  $cmp_script_params = $config->get('cmp_script_params');
-  $cmp_preferences_selector = $config->get('cmp_preferences_selector');
-  $cmp_preferences = $config->get('cmp_preferences');
-  $cmp_banner = $config->get('cmp_banner');
+  $cmp_version = (string) ($config->get('cmp_version') ?: 'advanced');
+  $cmp_script = trim((string) $config->get('cmp_script'));
+  $cmp_script_params = trim((string) $config->get('cmp_script_params'));
 
-  
   if (empty($cmp_script)) {
     return;
   }
 
-  $hostname = 'https://consent.trustarc.com';
-  $separator = '';
-
-  if (!empty($cmp_script_params)) {
-    if ($cmp_version == 'advanced') {
-      if (strpos($cmp_script_params, '&') !== 0) { 
-        $separator = '&';
-      }
-      $script_url = $hostname . "/notice?domain=" . $cmp_script . $separator . $cmp_script_params;
-    } else { // Pro version
-      if (strpos($cmp_script_params, '?') !== 0) { 
-        $separator = '?';
-      }
-      $script_url = $hostname . "/v2/notice/" . $cmp_script . $separator . $cmp_script_params;
-    }
-  } else {
-    $script_url = $hostname . ($cmp_version == 'advanced' ? "/notice?domain=" : "/v2/notice/") . $cmp_script;
+  if (!preg_match('/^[A-Za-z0-9._-]+$/', $cmp_script)) {
+    return;
   }
 
-  // Inject TrustArc script
+  $query = [];
+  if (!empty($cmp_script_params)) {
+    parse_str(ltrim($cmp_script_params, '?&'), $query);
+  }
+
+  if ($cmp_version === 'advanced') {
+    $query = ['domain' => $cmp_script] + $query;
+    $script_url = 'https://consent.trustarc.com/notice?' . UrlHelper::buildQuery($query);
+  }
+  else {
+    $script_url = 'https://consent.trustarc.com/v2/notice/' . rawurlencode($cmp_script);
+    if (!empty($query)) {
+      $script_url .= '?' . UrlHelper::buildQuery($query);
+    }
+  }
+
+  // Inject TrustArc script.
   $trustarc_script = [
     '#type' => 'html_tag',
     '#tag' => 'script',
@@ -56,72 +62,83 @@ function trustarc_page_attachments_alter(array &$page) {
     ],
   ];
 
-
-  // Ensure 'html_head' array exists
+  // Ensure 'html_head' array exists.
   if (!isset($page['#attached']['html_head'])) {
     $page['#attached']['html_head'] = [];
   }
 
   array_unshift($page['#attached']['html_head'], [$trustarc_script, 'trustarc_script']);
 
-
 }
 
 /**
  * Implements hook_preprocess_html().
  */
-function trustarc_preprocess_html(array &$variables) {
-  $config = \Drupal::config('trustarc.settings');
-  $cmp_version = $config->get('cmp_version', 'advanced');
-  $cmp_script = $config->get('cmp_script');
-  $cmp_script_params = $config->get('cmp_script_params');
-  $cmp_preferences_selector = $config->get('cmp_preferences_selector');
-  $cmp_preferences = $config->get('cmp_preferences');
-  $cmp_banner = $config->get('cmp_banner');
-  $cmp_standard_event_listener = $config->get('cmp_standard_event_listener');
-  $cmp_google_consent_mode = $config->get('cmp_google_consent_mode');
-  $cmp_ga_measurement_id = $config->get('cmp_ga_measurement_id');
-  $cmp_ads_data_redaction = $config->get('cmp_ads_data_redaction');
-  $cmp_url_passthrough = $config->get('cmp_url_passthrough');
-  $cmp_consent_type_mapping = $config->get('cmp_consent_type_mapping');
-  $cmp_ga_implied_location = $config->get('cmp_ga_implied_location');
+function trustarc_preprocess_html(array &$variables): void {
+  $variables['#cache']['tags'][] = 'config:trustarc.settings';
 
-
-  // Attach the library only once per page render.
-  if (empty($variables['#attached']['library']['trustarc/trustarc_js'])) {
-    $variables['#attached']['library']['trustarc/trustarc_js'] = 'trustarc/trustarc_js';
-
-    $variables['#attached']['drupalSettings']['trustarc'] = [
-      'Version' => $cmp_version,
-      'script' => $cmp_script,
-      'scriptParams' => $cmp_script_params,
-      'preferencesSelector' => $cmp_preferences_selector,
-      'preferences' => $cmp_preferences,
-      'banner' => $cmp_banner,
-      'standardEventListener' => $cmp_standard_event_listener,
-      'gcmEnabled' => $cmp_google_consent_mode,
-      'gaMeasurementID' => $cmp_ga_measurement_id,
-      'adsDataRedaction' => $cmp_ads_data_redaction,
-      'URLPassthrough' => $cmp_url_passthrough,
-      'impliedLocation' => $cmp_ga_implied_location,
-      'consentTypeMapping' => \Drupal\Component\Serialization\Json::encode($cmp_consent_type_mapping, JSON_NUMERIC_CHECK),
-    ];
+  if (
+    \Drupal::service('router.admin_context')->isAdminRoute(
+      \Drupal::routeMatch()->getRouteObject()
+    )
+  ) {
+    return;
   }
 
-  
-  if (!empty($cmp_banner)) {
-    // HTML to dynamically inject the div in the specified location
-    
-    // Add "Hello World" to the body
-    $variables['page']['#attached']['html_head'][] = [
-      [
-        '#type' => 'html_tag',
-        '#tag' => 'div',
-        '#value' => '',
-        '#attributes' => ['id' => [$cmp_banner]],
-      ],
-      'te_consent_banner',
-    ];
+  $config = \Drupal::config('trustarc.settings');
+  $cmp_version = (string) ($config->get('cmp_version') ?: 'advanced');
+  $cmp_script = trim((string) $config->get('cmp_script'));
+  $cmp_script_params = trim((string) $config->get('cmp_script_params'));
+  $cmp_preferences_selector = trim((string) $config->get('cmp_preferences_selector'));
+  $cmp_preferences = (bool) $config->get('cmp_preferences');
+  $cmp_banner = trim((string) $config->get('cmp_banner'));
+  $cmp_standard_event_listener = (bool) $config->get('cmp_standard_event_listener');
+  $cmp_consent_config = trim((string) ($config->get('cmp_consent_config') ?: 'notice_behavior'));
+  $cmp_google_consent_mode = (bool) $config->get('cmp_google_consent_mode');
+  $cmp_ga_measurement_id = trim((string) $config->get('cmp_ga_measurement_id'));
+  $cmp_ads_data_redaction = (bool) $config->get('cmp_ads_data_redaction');
+  $cmp_url_passthrough = (bool) $config->get('cmp_url_passthrough');
+  $cmp_consent_type_mapping = $config->get('cmp_consent_type_mapping') ?: [];
+  $cmp_ga_implied_location = trim((string) $config->get('cmp_ga_implied_location'));
+  $banner_id = $cmp_banner;
 
+  // Ensure #attached array exists.
+  if (!isset($variables['#attached'])) {
+    $variables['#attached'] = [];
+  }
+  if (!isset($variables['#attached']['library'])) {
+    $variables['#attached']['library'] = [];
+  }
+  if (!isset($variables['#attached']['drupalSettings'])) {
+    $variables['#attached']['drupalSettings'] = [];
+  }
+
+  // Attach the library and settings.
+  $variables['#attached']['library'][] = 'trustarc/trustarc_js';
+
+  $variables['#attached']['drupalSettings']['trustarc'] = [
+    'Version' => $cmp_version,
+    'script' => $cmp_script,
+    'scriptParams' => $cmp_script_params,
+    'preferencesSelector' => $cmp_preferences_selector,
+    'preferences' => $cmp_preferences,
+    'banner' => $banner_id,
+    'standardEventListener' => $cmp_standard_event_listener,
+    'consentConfig' => $cmp_consent_config,
+    'gcmEnabled' => $cmp_google_consent_mode,
+    'gaMeasurementID' => $cmp_ga_measurement_id,
+    'adsDataRedaction' => $cmp_ads_data_redaction,
+    'URLPassthrough' => $cmp_url_passthrough,
+    'impliedLocation' => $cmp_ga_implied_location,
+    'consentTypeMapping' => $cmp_consent_type_mapping,
+  ];
+
+  if (!empty($banner_id)) {
+    $variables['page_top']['trustarc_banner_container'] = [
+      '#type' => 'html_tag',
+      '#tag' => 'div',
+      '#value' => '',
+      '#attributes' => ['id' => $banner_id],
+    ];
   }
 }

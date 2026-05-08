@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="Drupal">
+  <description>Drupal coding standards and best practices</description>
+  <rule ref="Drupal"/>
+  <rule ref="DrupalPractice"/>
+  
+  <!-- Exclude certain directories -->
+  <exclude-pattern>*/vendor/</exclude-pattern>
+  <exclude-pattern>*/node_modules/</exclude-pattern>
+  <exclude-pattern>wordpress-plugin/</exclude-pattern>
+</ruleset>

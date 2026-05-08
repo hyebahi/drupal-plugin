@@ -1,167 +1,296 @@
 // js/trustarc.js
-(function($, Drupal, once) {
-    'use strict';
+(function (Drupal) {
+  Drupal.trustarc = {};
 
-    var $window = $(window);
+  const domain = window.location.host;
+  const TRUSTARC_ORIGIN = 'https://consent.trustarc.com';
+  const trustarc = drupalSettings.trustarc;
 
-    Drupal.trustarc = {};
+  /**
+   * Reads the TrustArc notice_behavior cookie value.
+   *
+   * @return {string} The cookie value, or an empty string if unavailable.
+   */
+  function getBehaviorCookie() {
+    if (
+      !window.truste ||
+      !window.truste.util ||
+      !window.truste.util.readCookie
+    ) {
+      return '';
+    }
+    return window.truste.util.readCookie('notice_behavior') || '';
+  }
 
-    const domain = window.location.host;
-    const trustarc = drupalSettings.trustarc;
-
-    if (typeof trustarc !== 'undefined' && (trustarc.gcmEnabled || trustarc.standardEventListener)) {
-        window.dataLayer = window.dataLayer || [];
+  /**
+   * Returns the current consent signal based on the configured consent mode.
+   *
+   * @param {string} consentConfig - Either 'consent_model' or 'notice_behavior'.
+   * @return {string} The active consent value, or an empty string if unavailable.
+   */
+  function getConsentConfig(consentConfig) {
+    if (consentConfig === 'consent_model') {
+      if (
+        window.truste &&
+        window.truste.eu &&
+        window.truste.eu.bindMap &&
+        window.truste.eu.bindMap.consentModel
+      ) {
+        return window.truste.eu.bindMap.consentModel;
+      }
+      return '';
     }
 
-    if (typeof trustarc !== 'undefined' && trustarc.gcmEnabled) {
-        /* 
-        GOOGLE CONSENT MODE INTEGRATION
-        */
-        const gtag = function() {
-            dataLayer.push(arguments);
-        }
+    return getBehaviorCookie();
+  }
 
-        gtag('js', new Date());
-        gtag('set', 'developer_id.dNTIxZG', true);
+  /**
+   * Checks whether the current consent setting matches an implied opt-out location.
+   *
+   * @param {string} consentSetting - The active consent value from getConsentConfig().
+   * @return {boolean} True if the location implies opt-out consent, false otherwise.
+   */
+  function isImpliedLocation(consentSetting) {
+    let impliedSettings = trustarc.impliedLocation
+      ? trustarc.impliedLocation
+      : '';
 
-        if (trustarc.gaMeasurementID) {
-            gtag('config', trustarc.gaMeasurementID);
-        }
-
-        gtag('set', 'ads_data_redaction', trustarc.adsDataRedaction == 1);
-        gtag('set', 'url_passthrough', trustarc.URLPassthrough == 1);
-
-        // Consent Mode Status
-        const ConsentType = {
-            DENIED: 'denied',
-            GRANTED: 'granted',
-        };
-
-        const booleanToConsentStatus = (boolean) => (boolean ? ConsentType.GRANTED : ConsentType.DENIED);
-
-        // Bucket Mapping
-        const consentTypesMapped = JSON.parse(trustarc.consentTypeMapping);
-
-
-        const getConsentState = (prefCookie) => {
-            var consentStates = {};
-
-            var noticeBehavior = window.truste.util.readCookie('notice_behavior');
-            var impliedConsentSetting = trustarc.impliedLocation ? trustarc.impliedLocation.split(',') : [];
-            
-           // var impliedLocation = noticeBehavior && trustarc.impliedLocation && noticeBehavior.includes(trustarc.impliedLocation);
-            var impliedLocation = impliedConsentSetting.some(( ics => noticeBehavior.indexOf(ics) > -1));
-
-            for (const consentType in consentTypesMapped) {
-                var id = parseInt(consentTypesMapped[consentType].trustarc_category_id, 10);
-                if(consentType !== "wait_for_update") {
-                    if (prefCookie && !prefCookie.includes(0)) {
-                        consentStates[consentType] = booleanToConsentStatus(prefCookie.includes(id));
-                    } else {
-                        consentStates[consentType] = booleanToConsentStatus(impliedLocation);
-                    }
-                }
-            }
-
-            if (consentTypesMapped && consentTypesMapped["wait_for_update"].trustarc_category_id) {
-                consentStates['wait_for_update'] = parseInt(consentTypesMapped["wait_for_update"].trustarc_category_id, 10);
-            }
-            return consentStates;
-        };
-
-        var runOnceGCM = 0;
-        Drupal.trustarc.handleConsentDecisionForGCM = function(consent) {
-            const consentStates = getConsentState(consent.consentDecision);
-            var defaultOrUpdate = runOnceGCM === 0 ? 'default' : 'update';
-            runOnceGCM++;
-
-            gtag('consent', defaultOrUpdate, consentStates);
-        }
-
-        var _taInterval;
-        var _taAttempts = 0;
-        var _taGoogleTagWasSetLate = function() {
-            if (_taAttempts > 50) clearInterval(_taInterval);
-
-            if (window.google_tag_data && window.google_tag_data.ics && window.google_tag_data.ics.wasSetLate) {
-                console.warn('WARNING: Tags are firing before consent is initialized. Please ensure that the consent mode default is initialized before firing tags.');
-                clearInterval(_taInterval);
-            }
-
-            _taAttempts++;
-        }
-        _taInterval = setInterval(_taGoogleTagWasSetLate, 200);
-    }
-    /* 
-        Event Listener
-    */
-    var __dispatched__ = {}; // Map of previously dispatched preference levels
-    Drupal.trustarc.handleConsentDecisionForTA = function(consent) {
-        consent.consentDecision && consent.consentDecision.forEach(function(label) {
-            if (!__dispatched__[label]) {
-                self.dataLayer && self.dataLayer.push({
-                    "event": "GDPR Pref Allows " + label
-                });
-                __dispatched__[label] = 1;
-            }
-        });
+    if (trustarc.consentConfig === 'consent_model' && impliedSettings === '') {
+      impliedSettings = 'opt-out';
     }
 
-    var interval = setInterval(() => {
-        if (window.truste && truste.cma && truste.cma.callApi) {
-            var consentDecision = truste.cma.callApi('getGDPRConsentDecision', domain);
-            if (typeof trustarc !== 'undefined') {
-                if (trustarc.gcmEnabled) {
-                    Drupal.trustarc.handleConsentDecisionForGCM(consentDecision);
-                }
-                if (trustarc.standardEventListener) {
-                    Drupal.trustarc.handleConsentDecisionForTA(consentDecision);
-                }
-            }
-            clearInterval(interval);
-        }
-    }, 100);
+    if (!consentSetting || !impliedSettings) {
+      return false;
+    }
 
-    // Start listening to when users submit their preferences
-    window.addEventListener('message', (event) => {
-        let eventDataJson = null;
-        try {
-            eventDataJson = JSON.parse(event.data);
-        } catch {
-            // Some other event that is not JSON.
-        }
+    const impliedLocationValues = impliedSettings
+      .split(',')
+      .map((value) => value.trim().toLowerCase())
+      .filter((value) => value !== '');
 
-        if (eventDataJson && eventDataJson.source === 'preference_manager') {
-            if (eventDataJson.message === 'submit_preferences') {
-                setTimeout(() => {
-                    var consentDecision = truste.cma.callApi('getGDPRConsentDecision', domain);
+    return impliedLocationValues.some((location) =>
+      consentSetting.toLowerCase().includes(location),
+    );
+  }
 
-                    if (typeof trustarc !== 'undefined') {
-                        if (trustarc.gcmEnabled) {
-                            Drupal.trustarc.handleConsentDecisionForGCM(consentDecision);
-                        }
-                        if (trustarc.standardEventListener) {
-                            Drupal.trustarc.handleConsentDecisionForTA(consentDecision);
-                        }
-                    }
-                }, 500);
-            }
-        }
-    }, false);
+  if (
+    typeof trustarc !== 'undefined' &&
+    (trustarc.gcmEnabled || trustarc.standardEventListener)
+  ) {
+    window.dataLayer = window.dataLayer || [];
+  }
 
-
-    Drupal.trustarc.loadCookieConsent = function() {
-        var targetElement = document.querySelector(trustarc.preferencesSelector) || document.body;
-        if (targetElement) {
-            var trustarcDiv = document.createElement('div');
-            trustarcDiv.id = 'teconsent';
-            trustarcDiv.className = 'trustarc-container';
-            targetElement.appendChild(trustarcDiv);
-        }
+  if (typeof trustarc !== 'undefined' && trustarc.gcmEnabled) {
+    /*
+     * GOOGLE CONSENT MODE INTEGRATION
+     */
+    const gtag = (...args) => {
+      window.dataLayer.push(args);
     };
 
-    $window.on('load', function() {
-        Drupal.trustarc.loadCookieConsent();
-    });
+    gtag('js', new Date());
+    gtag('set', 'developer_id.dNTIxZG', true);
 
-})(jQuery, Drupal, once);
+    if (trustarc.gaMeasurementID) {
+      gtag('config', trustarc.gaMeasurementID);
+    }
+
+    gtag('set', 'ads_data_redaction', trustarc.adsDataRedaction === 1);
+    gtag('set', 'url_passthrough', trustarc.URLPassthrough === 1);
+
+    // Consent Mode Status.
+    const ConsentType = {
+      DENIED: 'denied',
+      GRANTED: 'granted',
+    };
+
+    const booleanToConsentStatus = (boolean) =>
+      boolean ? ConsentType.GRANTED : ConsentType.DENIED;
+
+    // Bucket Mapping.
+    const consentTypesMapped = trustarc.consentTypeMapping || {};
+
+    const getConsentState = (prefCookie) => {
+      const consentStates = {};
+      const consentSetting = getConsentConfig(trustarc.consentConfig);
+      const impliedLocation = isImpliedLocation(consentSetting);
+
+      Object.keys(consentTypesMapped).forEach((consentType) => {
+        const id = parseInt(
+          consentTypesMapped[consentType].trustarc_category_id,
+          10,
+        );
+        if (consentType !== 'wait_for_update') {
+          if (prefCookie && !prefCookie.includes(0)) {
+            consentStates[consentType] = booleanToConsentStatus(
+              prefCookie.includes(id),
+            );
+          } else {
+            consentStates[consentType] =
+              booleanToConsentStatus(impliedLocation);
+          }
+        }
+      });
+
+      if (
+        consentTypesMapped &&
+        consentTypesMapped.wait_for_update &&
+        consentTypesMapped.wait_for_update.trustarc_category_id
+      ) {
+        consentStates.wait_for_update = parseInt(
+          consentTypesMapped.wait_for_update.trustarc_category_id,
+          10,
+        );
+      }
+      return consentStates;
+    };
+
+    let runOnceGCM = 0;
+    Drupal.trustarc.handleConsentDecisionForGCM = function (consent) {
+      const consentStates = getConsentState(consent.consentDecision);
+      const defaultOrUpdate = runOnceGCM === 0 ? 'default' : 'update';
+      runOnceGCM++;
+
+      gtag('consent', defaultOrUpdate, consentStates);
+    };
+
+    let _taInterval;
+    let _taAttempts = 0;
+    const _taGoogleTagWasSetLate = function () {
+      if (_taAttempts > 50) clearInterval(_taInterval);
+
+      if (
+        window.google_tag_data &&
+        window.google_tag_data.ics &&
+        window.google_tag_data.ics.wasSetLate
+      ) {
+        console.warn(
+          'WARNING: Tags are firing before consent is initialized. Please ensure that the consent mode default is initialized before firing tags.',
+        );
+        clearInterval(_taInterval);
+      }
+
+      _taAttempts++;
+    };
+    _taInterval = setInterval(_taGoogleTagWasSetLate, 200);
+  }
+
+  /*
+   * Event Listener
+   */
+  const __dispatched__ = {}; // Map of previously dispatched preference levels.
+  Drupal.trustarc.handleConsentDecisionForTA = function (consent) {
+    if (consent.consentDecision) {
+      consent.consentDecision.forEach(function (label) {
+        if (!__dispatched__[label]) {
+          if (window.dataLayer) {
+            window.dataLayer.push({
+              event: `GDPR Pref Allows ${label}`,
+            });
+          }
+          __dispatched__[label] = 1;
+        }
+      });
+    }
+  };
+
+  const interval = setInterval(() => {
+    if (window.truste && window.truste.cma && window.truste.cma.callApi) {
+      const consentDecision = window.truste.cma.callApi(
+        'getGDPRConsentDecision',
+        domain,
+      );
+      if (typeof trustarc !== 'undefined') {
+        if (trustarc.gcmEnabled) {
+          Drupal.trustarc.handleConsentDecisionForGCM(consentDecision);
+        }
+        if (trustarc.standardEventListener) {
+          Drupal.trustarc.handleConsentDecisionForTA(consentDecision);
+        }
+      }
+      clearInterval(interval);
+    }
+  }, 100);
+
+  // Start listening to when users submit their preferences.
+  window.addEventListener(
+    'message',
+    (event) => {
+      if (event.origin !== TRUSTARC_ORIGIN) {
+        return;
+      }
+
+      let eventDataJson = null;
+      try {
+        if (typeof event.data !== 'string') {
+          return;
+        }
+        eventDataJson = JSON.parse(event.data);
+      } catch {
+        // Some other event that is not JSON.
+      }
+
+      if (
+        eventDataJson &&
+        eventDataJson.source === 'preference_manager' &&
+        eventDataJson.message === 'submit_preferences'
+      ) {
+        setTimeout(() => {
+          const consentDecision = window.truste.cma.callApi(
+            'getGDPRConsentDecision',
+            domain,
+          );
+
+          if (typeof trustarc !== 'undefined') {
+            if (trustarc.gcmEnabled) {
+              Drupal.trustarc.handleConsentDecisionForGCM(consentDecision);
+            }
+            if (trustarc.standardEventListener) {
+              Drupal.trustarc.handleConsentDecisionForTA(consentDecision);
+            }
+          }
+        }, 500);
+      }
+    },
+    false,
+  );
+
+  function ensureTrustarcContainers() {
+    // Ensure banner container exists in body.
+    let bannerContainer = document.body;
+    if (trustarc && trustarc.banner) {
+      bannerContainer = document.getElementById(trustarc.banner);
+      if (!bannerContainer) {
+        bannerContainer = document.createElement('div');
+        bannerContainer.id = trustarc.banner;
+        document.body.appendChild(bannerContainer);
+      }
+    }
+
+    // Create teconsent div - use preferencesSelector if defined, otherwise use body.
+    let teconsentTarget = document.body;
+    if (trustarc && trustarc.preferencesSelector) {
+      try {
+        const selectorElement = document.querySelector(
+          trustarc.preferencesSelector,
+        );
+        if (selectorElement) {
+          teconsentTarget = selectorElement;
+        }
+      } catch (e) {
+        // Selector error, fall back to body.
+      }
+    }
+
+    if (teconsentTarget && !document.getElementById('teconsent')) {
+      const trustarcDiv = document.createElement('div');
+      trustarcDiv.id = 'teconsent';
+      trustarcDiv.className = 'trustarc-container';
+      teconsentTarget.appendChild(trustarcDiv);
+    }
+  }
+
+  Drupal.trustarc.loadCookieConsent = ensureTrustarcContainers;
+
+  Drupal.trustarc.loadCookieConsent();
+})(Drupal);

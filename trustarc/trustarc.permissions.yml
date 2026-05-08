@@ -1,4 +1,4 @@
-trustarc_settings:
+administer trustarc settings:
   title: 'TrustArc'
   description: 'Provides integration with TrustArc for cookie consent management.'
   restrict access: TRUE

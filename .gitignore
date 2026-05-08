@@ -1,0 +1,6 @@
+/cookiebot/
+/js_cookie/
+/wordpress/
+/trustarc/vendor/
+/node_modules/
+.DS_Store
