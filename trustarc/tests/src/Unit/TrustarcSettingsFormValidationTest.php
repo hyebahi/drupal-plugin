@@ -255,7 +255,7 @@ class TrustarcSettingsFormValidationTest extends UnitTestCase {
   }
 
   /**
-   * Tests that an unrecognised consent config value fails validation.
+   * Tests that an unrecognized consent config value fails validation.
    *
    * Only "notice_behavior" and "consent_model" are valid. Anything else
    * must set a form error on the "cmp_consent_config" field.

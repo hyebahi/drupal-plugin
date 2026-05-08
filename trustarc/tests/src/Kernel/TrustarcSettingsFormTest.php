@@ -64,7 +64,9 @@ class TrustarcSettingsFormTest extends KernelTestBase {
     $form = $form_object->buildForm([], $form_state);
 
     $library_discovery = \Drupal::service('library.discovery');
-    foreach ($form['#attached']['library'] ?? [] as $library) {
+    $libraries = $form['#attached']['library'] ?? [];
+    $this->assertIsArray($libraries, 'The #attached library list must be an array.');
+    foreach ($libraries as $library) {
       [$extension, $name] = explode('/', $library, 2);
       $result = $library_discovery->getLibraryByName($extension, $name);
       $this->assertNotFalse(
