@@ -131,4 +131,135 @@ class TrustarcHooksTest extends KernelTestBase {
     $this->assertSame('example.com', $variables['#attached']['drupalSettings']['trustarc']['script']);
   }
 
+  /**
+   * Tests the script URL shape for the advanced CMP version.
+   *
+   * When cmp_version is "advanced" the injected script src must point to
+   * /notice? with a domain query parameter equal to the configured script ID.
+   */
+  public function testPageAttachmentsAlterAdvancedUrlContainsDomain(): void {
+    \Drupal::configFactory()
+      ->getEditable('trustarc.settings')
+      ->set('cmp_script', 'example.com')
+      ->set('cmp_version', 'advanced')
+      ->save();
+
+    $page = [];
+    trustarc_page_attachments_alter($page);
+
+    $src = $page['#attached']['html_head'][0][0]['#attributes']['src'];
+    $this->assertStringContainsString('/notice?', $src);
+    $this->assertStringContainsString('domain=example.com', $src);
+  }
+
+  /**
+   * Tests the script URL shape for the pro CMP version.
+   *
+   * When cmp_version is "pro" the injected script src must use the
+   * /v2/notice/ path and must not include a domain= query parameter.
+   */
+  public function testPageAttachmentsAlterProVersionUrl(): void {
+    \Drupal::configFactory()
+      ->getEditable('trustarc.settings')
+      ->set('cmp_script', 'example.com')
+      ->set('cmp_version', 'pro')
+      ->save();
+
+    $page = [];
+    trustarc_page_attachments_alter($page);
+
+    $src = $page['#attached']['html_head'][0][0]['#attributes']['src'];
+    $this->assertStringContainsString('/v2/notice/', $src);
+    $this->assertStringContainsString('example.com', $src);
+    $this->assertStringNotContainsString('domain=', $src);
+  }
+
+  /**
+   * Tests that extra script parameters are appended to the script URL.
+   *
+   * When cmp_script_params is set the key-value pairs must appear in the
+   * injected script src alongside the required domain parameter.
+   */
+  public function testPageAttachmentsAlterWithExtraScriptParams(): void {
+    \Drupal::configFactory()
+      ->getEditable('trustarc.settings')
+      ->set('cmp_script', 'example.com')
+      ->set('cmp_version', 'advanced')
+      ->set('cmp_script_params', 'foo=bar')
+      ->save();
+
+    $page = [];
+    trustarc_page_attachments_alter($page);
+
+    $src = $page['#attached']['html_head'][0][0]['#attributes']['src'];
+    $this->assertStringContainsString('foo=bar', $src);
+    $this->assertStringContainsString('domain=example.com', $src);
+  }
+
+  /**
+   * Tests that a script ID containing invalid characters blocks injection.
+   *
+   * If the stored cmp_script value does not match the allowed character
+   * pattern the hook must return early and leave $page['#attached'] unset,
+   * preventing a malformed URL from being output.
+   */
+  public function testPageAttachmentsAlterSkipsInvalidScriptChars(): void {
+    \Drupal::configFactory()
+      ->getEditable('trustarc.settings')
+      ->set('cmp_script', 'bad script!')
+      ->save();
+
+    $page = [];
+    trustarc_page_attachments_alter($page);
+
+    $this->assertArrayNotHasKey('#attached', $page);
+  }
+
+  /**
+   * Tests that hook_preprocess_html() attaches the trustarc JS library.
+   *
+   * The "trustarc/trustarc_js" library must appear in the variables
+   * #attached library array so that trustarc.js is loaded on every
+   * non-admin page.
+   */
+  public function testPreprocessHtmlAttachesLibrary(): void {
+    $variables = [];
+    trustarc_preprocess_html($variables);
+
+    $this->assertContains('trustarc/trustarc_js', $variables['#attached']['library']);
+  }
+
+  /**
+   * Tests that all expected drupalSettings keys are present.
+   *
+   * All fourteen configuration values must be passed to JavaScript so that
+   * trustarc.js can function correctly regardless of which features are
+   * enabled.
+   */
+  public function testPreprocessHtmlDrupalSettingsHasAllKeys(): void {
+    $variables = [];
+    trustarc_preprocess_html($variables);
+
+    $settings = $variables['#attached']['drupalSettings']['trustarc'];
+    $expected_keys = [
+      'Version',
+      'script',
+      'scriptParams',
+      'preferencesSelector',
+      'preferences',
+      'banner',
+      'standardEventListener',
+      'consentConfig',
+      'gcmEnabled',
+      'gaMeasurementID',
+      'adsDataRedaction',
+      'URLPassthrough',
+      'impliedLocation',
+      'consentTypeMapping',
+    ];
+    foreach ($expected_keys as $key) {
+      $this->assertArrayHasKey($key, $settings, "drupalSettings.trustarc is missing key '$key'.");
+    }
+  }
+
 }
