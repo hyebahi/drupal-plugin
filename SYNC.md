@@ -51,6 +51,18 @@ git fetch https://hyebahi:<token>@git.drupalcode.org/project/trustarc.git main
 git checkout -b your-branch-name FETCH_HEAD
 ```
 
+### If `main` moves while your MR is open
+
+If new commits land on `main` before your MR merges, **do not rebase** (force push is blocked on drupal.org). Use a merge commit instead:
+
+```bash
+# In trustarc-upstream/
+git fetch https://hyebahi:<token>@git.drupalcode.org/project/trustarc.git main
+git merge origin/main        # creates a merge commit — no force push needed
+# resolve any conflicts, then:
+git push https://hyebahi:<token>@git.drupalcode.org/project/trustarc.git your-branch-name
+```
+
 ### 5. Commit — no co-author line
 
 The upstream commit must be under your name only, no tooling attribution:
@@ -81,8 +93,10 @@ curl --request POST "https://git.drupalcode.org/api/v4/projects/173971/merge_req
 curl --request PUT "https://git.drupalcode.org/api/v4/projects/173971/merge_requests/<iid>/merge" \
   --header "PRIVATE-TOKEN: <token>" \
   --header "Content-Type: application/json" \
-  --data '{"squash": true}'
+  --data '{"should_remove_source_branch": true}'
 ```
+
+Do **not** use `"squash": true` — it rewrites commit history and loses individual commit context.
 
 ---
 
