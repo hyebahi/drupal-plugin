@@ -8,6 +8,7 @@ parameters:
     # new static() is a best practice in Drupal, so we cannot fix that.
     # @see https://www.drupal.org/docs/develop/development-tools/phpstan/handling-unsafe-usage-of-new-static
     - "#^Unsafe usage of new static#"
-    # Drupal hook parameters cannot carry PHPDoc @param without violating
-    # Drupal.Commenting.HookComment.HookParamDoc, so suppress the array-type warning here.
+    # phpcbf auto-removes @param from hook implementations per Drupal conventions,
+    # so we cannot add value-type annotations to satisfy PHPStan without them
+    # being silently stripped on the next code-style pass.
     - "#^Function trustarc_.+ has parameter .+ with no value type specified in iterable type array#"

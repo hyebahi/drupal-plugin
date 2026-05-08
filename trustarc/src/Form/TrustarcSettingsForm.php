@@ -290,9 +290,6 @@ class TrustarcSettingsForm extends ConfigFormBase {
       ];
     }
 
-    // Attach the library.
-    $form['#attached']['library'][] = 'trustarc/trustarc_admin';
-
     return parent::buildForm($form, $form_state);
   }
 

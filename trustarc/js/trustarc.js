@@ -1,7 +1,5 @@
 // js/trustarc.js
-(function ($, Drupal, once) {
-  const $window = $(window);
-
+(function (Drupal) {
   Drupal.trustarc = {};
 
   const domain = window.location.host;
@@ -295,4 +293,4 @@
   Drupal.trustarc.loadCookieConsent = ensureTrustarcContainers;
 
   Drupal.trustarc.loadCookieConsent();
-})(jQuery, Drupal, once);
+})(Drupal);

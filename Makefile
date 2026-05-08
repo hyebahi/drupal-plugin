@@ -82,7 +82,7 @@ test-kernel:
 		(cd /workspace/trustarc && tar --exclude=vendor --exclude=composer.lock -cf - .) | (cd web/modules/contrib/trustarc && tar -xf -); \
 		composer require --dev drupal/core-dev --no-interaction --no-progress -W; \
 		cp web/core/phpunit.xml.dist web/core/phpunit.xml; \
-		./vendor/bin/phpunit web/modules/contrib/trustarc/tests/src/Kernel/ --configuration web/core/phpunit.xml --testdox"
+		./vendor/bin/phpunit web/modules/contrib/trustarc/tests/src/Kernel/ --configuration /tmp/drupal-kernel-test/web/core/phpunit.xml --testdox"
 
 # Run Security Audit
 security-audit:
